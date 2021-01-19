@@ -10,7 +10,7 @@ class DatabaseObjectCompanion<P : Any, T : DatabaseObject<P>>(val primaryKClass:
     private val cached = Cache<P, T>(cacheSize)
 
     fun load(identifier: P): T? {
-        if (identifier in cached) return cached[identifier]
+        cached[identifier]?.let { return@load it }
         val databaseObject = theConstructor()
         val columns = databaseObject._delegates.map { it.column }
         val row = databaseObject.table.select(columns, { databaseObject.primaryColumn eq identifier }).firstOrNull() ?: return null
