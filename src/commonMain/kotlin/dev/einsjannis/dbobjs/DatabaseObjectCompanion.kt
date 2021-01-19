@@ -5,7 +5,7 @@ import dev.einsjannis.db.Row
 import dev.einsjannis.db.select
 import kotlin.reflect.KClass
 
-class DatabaseObjectCompanion<P : Any, T : DatabaseObject<P>>(val primaryKClass: KClass<P>, val theConstructor: () -> T, val cacheSize: Int) {
+abstract class DatabaseObjectCompanion<P : Any, T : DatabaseObject<P>>(val kClass: KClass<T>, val theConstructor: () -> T, cacheSize: Int = 255) {
 
     private val cached = Cache<P, T>(cacheSize)
 

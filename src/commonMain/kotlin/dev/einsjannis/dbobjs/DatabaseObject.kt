@@ -1,10 +1,6 @@
 package dev.einsjannis.dbobjs
 
-import dev.einsjannis.db.Column
-import dev.einsjannis.db.DatabaseInterface
-import dev.einsjannis.db.Table
-import dev.einsjannis.db.DatabaseType
-import dev.einsjannis.db.delete
+import dev.einsjannis.db.*
 import kotlin.reflect.KClass
 
 abstract class DatabaseObject<P : Any>(val databaseInterface: DatabaseInterface, val serialName: String) {
@@ -53,16 +49,23 @@ abstract class DatabaseObject<P : Any>(val databaseInterface: DatabaseInterface,
     protected fun blob(serialName: String) = delegate(serialName, DatabaseType.Blob)
     protected fun xml(serialName: String) = delegate(serialName, DatabaseType.Xml)
     protected fun json(serialName: String) = delegate(serialName, DatabaseType.Json)
-    protected fun <OP : Any, OT : DatabaseObject<OP>> `object`(serialName: String, companion: DatabaseObjectCompanion<OP, OT>) =
+    protected fun <OP : Any, OT : DatabaseObject<OP>> `object`(serialName: String, companion: DatabaseObjectCompanion<OP, OT>): ColumnDelegate<P, OT> =
         delegate(serialName, DatabaseType.Object(companion))
 
-    protected fun ColumnDelegate<P, P>.primary() {
+    protected fun ColumnDelegate<P, P>.primary(): ColumnDelegate<P, P> {
         if (_primaryDelegate != null) throw TODO()
         _primaryDelegate = this
+        return this
     }
 
     fun verify() = _delegates.all { it.verify() }
 
     fun delete() = table.delete { primaryColumn eq primaryValue }
+
+    fun update() {
+        val builder = UpdateBuilder()
+        _delegates.forEach { it.update(builder) }
+        builder()
+    }
 
 }

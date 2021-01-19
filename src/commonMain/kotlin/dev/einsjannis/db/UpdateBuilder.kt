@@ -13,4 +13,9 @@ class UpdateBuilder {
     fun <T : Any> Table.update(column: Column<T>, value: T, where: ConditionBuilderContext.() -> Condition) =
         update(column, value, condition(where))
 
+    operator fun invoke() = _updates.forEach { (pair, changes) ->
+        val (table, condition) = pair
+        table.update(PartialRow(changes), condition)
+    }
+
 }

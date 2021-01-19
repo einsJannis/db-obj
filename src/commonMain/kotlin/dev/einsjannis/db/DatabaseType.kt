@@ -45,5 +45,5 @@ sealed class DatabaseType<T : Any>(val kClass: KClass<out T>, val verify: (T) ->
     object Blob : DatabaseType<ByteArray>(ByteArray::class)
     object Xml : DatabaseType<String>(String::class)
     object Json : DatabaseType<String>(String::class)
-    class Object<OP : Any, OT : DatabaseObject<OP>>(val databaseObjectCompanion: DatabaseObjectCompanion<OP, OT>) : DatabaseType<OP>(databaseObjectCompanion.primaryKClass)
+    class Object<OP : Any, OT : DatabaseObject<OP>>(val databaseObjectCompanion: DatabaseObjectCompanion<OP, OT>) : DatabaseType<OT>(databaseObjectCompanion.kClass)
 }
