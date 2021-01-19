@@ -12,9 +12,10 @@ open class ColumnDelegate<T : Any>(val thisRef: DatabaseObject<*>, val column: C
     var changed: Boolean = false
         private set
 
-    private val nonNullValue: T get() = _value ?: throw TODO()
+    internal val nonNullValue: T get() = _value ?: throw TODO()
 
     override fun setValue(thisRef: DatabaseObject<*>, property: KProperty<*>, value: T) {
+        if (column.databaseType.verify(value)) throw TODO()
         if (!changed) changed = true
         _value = value
     }

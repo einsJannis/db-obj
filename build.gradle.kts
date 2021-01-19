@@ -7,6 +7,8 @@ version = "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
+    maven { url = uri("https://oss.sonatype.org/content/repositories/snapshots") }
+    maven { url = uri("https://kotlin.bintray.com/kotlinx/") }
 }
 
 kotlin {
@@ -26,7 +28,12 @@ kotlin {
     linuxX64()
     mingwX64()
     sourceSets {
-        val commonMain by getting
+        val commonMain by getting {
+            dependencies {
+                implementation("com.ionspin.kotlin:bignum:0.2.3")
+                implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.1.1")
+            }
+        }
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test-common"))

@@ -1,7 +1,3 @@
 package dev.einsjannis.db
 
-import kotlin.reflect.KClass
-
-data class Column<out T : Any>(val name: String, val kClass: KClass<out T>) {
-
-}
+data class Column<T : Any>(val name: String, val databaseType: DatabaseType<T>)
