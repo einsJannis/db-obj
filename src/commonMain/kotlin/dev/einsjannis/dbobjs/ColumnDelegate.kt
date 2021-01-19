@@ -5,7 +5,7 @@ import dev.einsjannis.db.UpdateBuilder
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
-open class ColumnDelegate<T : Any>(val thisRef: DatabaseObject<*>, val column: Column<T>) : ReadWriteProperty<DatabaseObject<*>, T> {
+open class ColumnDelegate<P : Any, T : Any>(val thisRef: DatabaseObject<P>, val column: Column<T>) : ReadWriteProperty<DatabaseObject<*>, T> {
 
     private var _value: T? = null
 
@@ -15,9 +15,7 @@ open class ColumnDelegate<T : Any>(val thisRef: DatabaseObject<*>, val column: C
     internal val nonNullValue: T get() = _value ?: throw TODO()
 
     override fun setValue(thisRef: DatabaseObject<*>, property: KProperty<*>, value: T) {
-        if (column.databaseType.verify(value)) throw TODO()
-        if (!changed) changed = true
-        _value = value
+        setValue(value)
     }
 
     override fun getValue(thisRef: DatabaseObject<*>, property: KProperty<*>): T {
@@ -28,5 +26,16 @@ open class ColumnDelegate<T : Any>(val thisRef: DatabaseObject<*>, val column: C
         changed = false
         thisRef.table.update(column, nonNullValue) { thisRef.primaryColumn eq thisRef.primaryValue }
     }
+
+    internal fun setValue(value: Any) {
+        if (!column.databaseType.kClass.isInstance(value)) throw TODO()
+        @Suppress("UNCHECKED_CAST")
+        val v = value as T
+        if (column.databaseType.verify(v)) throw TODO()
+        if (!changed) changed = true
+        _value = v
+    }
+
+    fun verify() = _value != null
 
 }
