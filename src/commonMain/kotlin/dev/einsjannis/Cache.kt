@@ -18,4 +18,8 @@ class Cache<K, V>(val size: Int) {
         if (_backing.size > size) _backing.remove(_backing.entries.maxByOrNull { it.value.usageId }!!.key)
     }
 
+    fun remove(key: K) { _backing.remove(key) }
+
+    fun clear() { _backing.clear() }
+
 }

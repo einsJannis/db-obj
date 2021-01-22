@@ -11,19 +11,19 @@ data class AndCondition(val a: Condition, val b: Condition) : Condition()
 
 data class OrCondition(val a: Condition, val b: Condition) : Condition()
 
-data class EqualsCondition<T : Any>(val column: Column<T>, val value: T) : Condition()
+data class EqualsCondition<T : Any, TABLE : Table<TABLE>>(val column: Column<T, TABLE>, val value: T) : Condition()
 
-data class ContainsCondition<T : Any>(val column: Column<T>, val values: List<T>) : Condition()
+data class ContainsCondition<T : Any, TABLE : Table<TABLE>>(val column: Column<T, TABLE>, val values: List<T>) : Condition()
 
-data class GreaterCondition<T : Any>(val column: Column<T>, val value: T) : Condition()
+data class GreaterCondition<T : Any, TABLE : Table<TABLE>>(val column: Column<T, TABLE>, val value: T) : Condition()
 
-data class GreaterEqualsCondition<T : Any>(val column: Column<T>, val value: T) : Condition()
+data class GreaterEqualsCondition<T : Any, TABLE : Table<TABLE>>(val column: Column<T, TABLE>, val value: T) : Condition()
 
-data class SmallerCondition<T : Any>(val column: Column<T>, val value: T) : Condition()
+data class SmallerCondition<T : Any, TABLE : Table<TABLE>>(val column: Column<T, TABLE>, val value: T) : Condition()
 
-data class SmallerEqualsCondition<T : Any>(val column: Column<T>, val value: T) : Condition()
+data class SmallerEqualsCondition<T : Any, TABLE : Table<TABLE>>(val column: Column<T, TABLE>, val value: T) : Condition()
 
-object ConditionBuilderContext {
+class ConditionBuilderContext<TABLE : Table<TABLE>> {
 
     fun not(condition: Condition) = NotCondition(condition)
 
@@ -31,46 +31,57 @@ object ConditionBuilderContext {
 
     infix fun Condition.or(other: Condition) = OrCondition(this, other)
 
-    infix fun <T : Any> Column<T>.eq(value: T): Condition = EqualsCondition(this, value)
+    infix fun <T : Any> Column<T, TABLE>.eq(value: T): Condition = EqualsCondition(this, value)
 
-    infix fun <T : Any> Column<T>.`in`(values: List<T>): Condition = ContainsCondition(this, values)
+    infix fun <T : Any> Column<T, TABLE>.`in`(values: List<T>): Condition = ContainsCondition(this, values)
 
-    infix fun <T : Any> Column<T>.greaterThen(value: T): Condition = GreaterCondition(this, value)
+    infix fun <T : Any> Column<T, TABLE>.greaterThen(value: T): Condition = GreaterCondition(this, value)
 
-    infix fun <T : Any> Column<T>.greaterEqualTo(value: T): Condition = GreaterEqualsCondition(this, value)
+    infix fun <T : Any> Column<T, TABLE>.greaterEqualTo(value: T): Condition = GreaterEqualsCondition(this, value)
 
-    infix fun <T : Any> Column<T>.smallerThen(value: T): Condition = SmallerCondition(this, value)
+    infix fun <T : Any> Column<T, TABLE>.smallerThen(value: T): Condition = SmallerCondition(this, value)
 
-    infix fun <T : Any> Column<T>.smallerEqualTo(value: T): Condition = SmallerEqualsCondition(this, value)
+    infix fun <T : Any> Column<T, TABLE>.smallerEqualTo(value: T): Condition = SmallerEqualsCondition(this, value)
 
 }
 
-fun condition(block: ConditionBuilderContext.() -> Condition): Condition {
+fun <T : Table<T>> condition(block: ConditionBuilderContext<T>.() -> Condition): Condition {
     contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
-    return ConditionBuilderContext.run(block)
+    return ConditionBuilderContext<T>().run(block)
 }
 
-fun Table.select(
-    columns: List<Column<*>>,
-    where: ConditionBuilderContext.() -> Condition,
+fun <T : Table<T>> T.select(
+    columns: List<Column<*, T>>,
+    where: ConditionBuilderContext<T>.() -> Condition,
     limit: Int? = null
-) = this.select(columns, condition(where), limit)
+): List<PartialRow<T>> = this.select(columns, condition(where), limit)
 
-fun DatabaseInterface.select(
-    columns: List<Column<*>>,
-    where: ConditionBuilderContext.() -> Condition,
-    table: Table,
+fun <T : Table<T>> T.select(
+    where: ConditionBuilderContext<T>.() -> Condition,
+    limit: Int? = null
+): List<Row<T>> = this.select(condition(where), limit)
+
+fun <T : Table<T>> Database.select(
+    columns: List<Column<*, T>>,
+    where: ConditionBuilderContext<T>.() -> Condition,
+    table: T,
     limit: Int? = null
 ) = this.select(columns, condition(where), table, limit)
 
-fun Table.update(row: PartialRow, where: ConditionBuilderContext.() -> Condition) =
+fun <T : Table<T>> Database.select(
+    where: ConditionBuilderContext<T>.() -> Condition,
+    table: T,
+    limit: Int? = null
+) = this.select(condition(where), table, limit)
+
+fun <T : Table<T>> T.update(row: PartialRow<T>, where: ConditionBuilderContext<T>.() -> Condition): Unit =
     this.update(row, condition(where))
 
-fun DatabaseInterface.update(row: PartialRow, where: ConditionBuilderContext.() -> Condition, table: Table) =
+fun <T : Table<T>> Database.update(row: PartialRow<T>, where: ConditionBuilderContext<T>.() -> Condition, table: T) =
     this.update(row, condition(where), table)
 
-fun Table.delete(where: ConditionBuilderContext.() -> Condition) =
+fun <T : Table<T>> T.delete(where: ConditionBuilderContext<T>.() -> Condition): Unit =
     this.delete(condition(where))
 
-fun DatabaseInterface.delete(where: ConditionBuilderContext.() -> Condition, table: Table) =
+fun <T : Table<T>> Database.delete(where: ConditionBuilderContext<T>.() -> Condition, table: T): Unit =
     this.delete(condition(where), table)

@@ -4,18 +4,18 @@ import dev.einsjannis.computeIfAbsent
 
 class UpdateBuilder {
 
-    private val _updates = mutableMapOf<Pair<Table, Condition>, MutableMap<Column<*>, Any>>()
+    private val _updates = mutableMapOf<Pair<Table<*>, Condition>, MutableMap<Column<*, *>, Any>>()
 
-    fun <T : Any> Table.update(column: Column<T>, value: T, where: Condition) {
+    fun <T : Any, TABLE : Table<TABLE>> TABLE.update(column: Column<T, TABLE>, value: T, where: Condition) {
         _updates.computeIfAbsent(Pair(this, where), ::mutableMapOf)[column] = value
     }
 
-    fun <T : Any> Table.update(column: Column<T>, value: T, where: ConditionBuilderContext.() -> Condition) =
+    fun <T : Any, TABLE : Table<TABLE>> TABLE.update(column: Column<T, TABLE>, value: T, where: ConditionBuilderContext<TABLE>.() -> Condition) =
         update(column, value, condition(where))
 
     operator fun invoke() = _updates.forEach { (pair, changes) ->
         val (table, condition) = pair
-        table.update(PartialRow(changes), condition)
+        //TODO: table.update(PartialRow(changes), condition)
     }
 
 }

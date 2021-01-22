@@ -1,3 +1,3 @@
 package dev.einsjannis.db
 
-data class Column<T : Any>(val name: String, val databaseType: DatabaseType<T>)
+data class Column<T : Any, TABLE : Table<TABLE>>(val name: String, val databaseType: DatabaseType<T>, val table: TABLE)

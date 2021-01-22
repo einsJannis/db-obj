@@ -2,8 +2,6 @@ package dev.einsjannis.db
 
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import com.ionspin.kotlin.bignum.integer.BigInteger
-import dev.einsjannis.dbobjs.DatabaseObject
-import dev.einsjannis.dbobjs.DatabaseObjectCompanion
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.DateTimePeriod
 import kotlinx.datetime.Instant
@@ -45,5 +43,9 @@ sealed class DatabaseType<T : Any>(val kClass: KClass<out T>, val verify: (T) ->
     object Blob : DatabaseType<ByteArray>(ByteArray::class)
     object Xml : DatabaseType<String>(String::class)
     object Json : DatabaseType<String>(String::class)
-    class Object<OP : Any, OT : DatabaseObject<OP>>(val databaseObjectCompanion: DatabaseObjectCompanion<OP, OT>) : DatabaseType<OT>(databaseObjectCompanion.kClass)
+    @Suppress("UNCHECKED_CAST")
+    class Row<T : Table<T>>(table: Table<T>) : DatabaseType<dev.einsjannis.db.Row<T>>(
+        dev.einsjannis.db.Row::class as KClass<out dev.einsjannis.db.Row<T>>,
+        { row -> table.columns.all { row.contains(it) } }
+    )
 }
